@@ -1,7 +1,8 @@
-1. Install: python-3.9.6-amd64.exe
+1. Install python-3.9.6-amd64.exe from following link:
+https://www.python.org/ftp/python/3.9.6/python-3.9.6-amd64.exe
+
 	In the installation process check all checkboxes
 	Use custom install
-3. run: Installer.bat
-4. run: python.exe -m pip install --upgrade pip
-5. If everything was correct by running main.pyw you can start the application
-
+3. Run Installer.bat
+4. Copy config.bin and lookupTable.txt from /Config folder into the /Src folder
+4. If everything was correct by running main.pyw you can start the application

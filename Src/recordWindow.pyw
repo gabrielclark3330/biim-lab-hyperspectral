@@ -559,22 +559,19 @@ class RecordApplicationWindow(QtWidgets.QMainWindow):
         self.baslerDisplayHeight = self.ui.label_BaslerView.height()
     #############################################################
     def writeConfig(self):
-        self.setExposure=self.ui.horizontalSlider_Exposure.value()
-        self.setGain=self.ui.horizontalSlider_Gain.value()
-        self.setGamma=self.ui.horizontalSlider_Gamma.value()
-        self.scanLen=self.ui.spinBox_scanLength.value()
         doubleExposureCoeff=int(self.doubleExposureCoeff*1000)
+        calibCoeff=np.zeros(shape=(6),dtype=int)
+        calibCoeff[0]=int(self.calibCoeff[0]*1000)
+        calibCoeff[1]=int(self.calibCoeff[1]*1000)
+        calibCoeff[2]=int(self.calibCoeff[2]*1000)
+        calibCoeff[3]=int(self.calibCoeff[3]*1000)
+        calibCoeff[4]=int(self.calibCoeff[4]*1000)
+        calibCoeff[5]=int(self.calibCoeff[5]*1000)
         configGammaMin=int(self.configGammaMin*1000)
         configGammaMax=int(self.configGammaMax*1000)
-        nums=[int(self.offsetX),int(self.offsetY),int(self.roiX),int(self.roiY),int(self.binningX),int(self.binningY),int(self.HighRes),doubleExposureCoeff,\
-        int(self.offAxisPixNum),int(self.CWRotation),int(self.refFrameNum),int(self.setExposure),int(self.setGain),int(self.setGamma),int(self.scanLen),int(self.maxFrameNum),\
-        int(self.flipSecondaryVertical),int(self.flipSecondaryHorizontal),int(self.secondaryVerticalLine),\
-        int(self.order),int(self.baslerReverseX),configGammaMin,configGammaMax,int(self.calibCoeffNum)]
-        for i in range(self.calibCoeffNum):
-            CLBFX=int(self.calibCoeff_x[i]*1000)
-            CLBFY=int(self.calibCoeff_y[i]*1000)
-            nums.append(CLBFX)
-            nums.append(CLBFY)
+        nums=[int(self.offsetX),int(self.offsetY),int(self.roiX),int(self.roiY),int(self.binningX),int(self.binningY),int(self.HighRes),doubleExposureCoeff,calibCoeff[0],calibCoeff[1],calibCoeff[2],calibCoeff[3],calibCoeff[4],calibCoeff[5],\
+        int(self.offAxisPixNum),int(self.CWRotation),int(self.refFrameNum),int(self.setExposure),int(self.setGain),int(self.setGamma),int(self.scanLen),int(self.maxFrameNum),int(self.flipSecondaryVertical),int(self.flipSecondaryHorizontal),int(self.secondaryVerticalLine),\
+        int(self.order),int(self.baslerReverseX),configGammaMin,configGammaMax]
         f=open('config.bin','wb')
         for num in nums:
             #print(format(num,'020b'))
@@ -583,6 +580,7 @@ class RecordApplicationWindow(QtWidgets.QMainWindow):
     def readConfig(self):
         f=open('config.bin','r')
         nums=f.read()
+        self.calibCoeff=np.zeros(shape=(6),dtype=float)
         self.offsetX=int(nums[0:100],2)
         self.offsetY=int(nums[100:200],2)
         self.roiX=int(nums[200:300],2)
@@ -591,33 +589,27 @@ class RecordApplicationWindow(QtWidgets.QMainWindow):
         self.binningY=int(nums[500:600],2)
         self.HighRes=bool(int(nums[600:700],2))
         self.doubleExposureCoeff=float(int(nums[700:800],2))/1000.0
-        self.offAxisPixNum=int(nums[800:900],2)
-        self.CWRotation=bool(int(nums[900:1000],2))
-        self.refFrameNum=int(nums[1000:1100],2)
-        self.setExposure=int(nums[1100:1200],2)
-        self.setGain=int(nums[1200:1300],2)
-        self.setGamma=int(nums[1300:1400],2)
-        self.scanLen=int(nums[1400:1500],2)
-        self.maxFrameNum=int(nums[1500:1600],2)
-        self.flipSecondaryVertical=bool(int(nums[1600:1700],2))
-        self.flipSecondaryHorizontal=bool(int(nums[1700:1800],2))
-        self.secondaryVerticalLine=int(nums[1800:1900],2)
-        self.order=int(nums[1900:2000],2)
-        self.baslerReverseX=bool(int(nums[2000:2100],2))
-        self.configGammaMin=float(int(nums[2100:2200],2))/1000.0
-        self.configGammaMax=float(int(nums[2200:2300],2))/1000.0
-        self.calibCoeffNum=int(nums[2300:2400],2)
-        self.calibCoeff_x=np.zeros(shape=(self.calibCoeffNum),dtype=float)
-        self.calibCoeff_y=np.zeros(shape=(self.calibCoeffNum),dtype=float)
-        cx=0
-        cy=0
-        for i in range(2*self.calibCoeffNum):
-            if(i%2==0):
-                self.calibCoeff_x[cx]=float(int(nums[2400+(i*100):2400+((i+1)*100)],2))/1000.0
-                cx+=1
-            else:
-                self.calibCoeff_y[cy]=float(int(nums[2400+(i*100):2400+((i+1)*100)],2))/1000.0
-                cy+=1
+        self.calibCoeff[0]=float(int(nums[800:900],2))/1000.0
+        self.calibCoeff[1]=float(int(nums[900:1000],2))/1000.0
+        self.calibCoeff[2]=float(int(nums[1000:1100],2))/1000.0
+        self.calibCoeff[3]=float(int(nums[1100:1200],2))/1000.0
+        self.calibCoeff[4]=float(int(nums[1200:1300],2))/1000.0
+        self.calibCoeff[5]=float(int(nums[1300:1400],2))/1000.0
+        self.offAxisPixNum=int(nums[1400:1500],2)
+        self.CWRotation=bool(int(nums[1500:1600],2))
+        self.refFrameNum=int(nums[1600:1700],2)
+        self.setExposure=int(nums[1700:1800],2)
+        self.setGain=int(nums[1800:1900],2)
+        self.setGamma=int(nums[1900:2000],2)
+        self.scanLen=int(nums[2000:2100],2)
+        self.maxFrameNum=int(nums[2100:2200],2)
+        self.flipSecondaryVertical=bool(int(nums[2200:2300],2))
+        self.flipSecondaryHorizontal=bool(int(nums[2300:2400],2))
+        self.secondaryVerticalLine=int(nums[2400:2500],2)
+        self.order=int(nums[2500:2600],2)
+        self.baslerReverseX=bool(int(nums[2600:2700],2))
+        self.configGammaMin=float(int(nums[2700:2800],2))/1000.0
+        self.configGammaMax=float(int(nums[2800:2900],2))/1000.0
         f.close()
     ###########################################################
     def readLookUpTable(self):
@@ -783,7 +775,7 @@ class RecordApplicationWindow(QtWidgets.QMainWindow):
     def startRecord(self):
         try:
             self.ser.write(b'\r\n')
-        except :#serial.serialutil.SerialException:
+        except serial.serialutil.SerialException:
             self.ui.comboBox_ArduinoCom.clear()
             qm = QMessageBox()
             qm.setIcon(QMessageBox.Warning)
@@ -795,10 +787,6 @@ class RecordApplicationWindow(QtWidgets.QMainWindow):
                 qm.setIcon(QMessageBox.Warning)
                 qm.about(self,'Error','Please Connect Scanner\nAnd\nUpdate Scanner Port!')
             return
-        if(self.baslerThread.FPS>30.0):
-            qm = QMessageBox()
-            qm.setIcon(QMessageBox.Warning)
-            qm.about(self,'Error','FrameRate higher than 30(fps) is not allowed\n Please set the exposure to less than : %d\n',int(30*self.ui.horizontalSlider_Exposure.value()/self.baslerThread.FPS))
         if(not self.set_referance):
             for i in range(4):
                 self.ser.write(b'\r\n')
@@ -843,20 +831,9 @@ class RecordApplicationWindow(QtWidgets.QMainWindow):
             self.timeRecordStart=tm.time()
     def move_it(self):
         self.ser.flush()
-        #fp=min(self.baslerThread.FPS,30.E0)
-        #x=int(10.0*self.maxFrameNum/fp)
-        #x=(1.E+6/(fp*400))+self.maxFrameNum
-        ################################################################################
-        fp=min(self.baslerThread.FPS,30.E0)
-        ds=self.ui.spinBox_scanLength.value()
-        resolution=0.7E0
-        tp=ds/(resolution*fp)
-        numofrev=ds/8.E0;
-        numofpulse=25000.E0
-        totalpulse=numofrev*numofpulse
-        speed_real=(tp*1.E+6)/(totalpulse)
-        x=239+int(0.49E0*speed_real-4.9E0)
-        ################################################################################
+        fp=self.baslerThread.FPS
+        x=int(10.0*self.maxFrameNum/fp)
+        x=(1.E+6/(fp*400))+self.maxFrameNum
         self.ser.write(b'%d\r\n'%x)
         self.ser.flush()
         time.sleep(0.5)

@@ -60,6 +60,7 @@ class AnalyzeApplicationWindow(QtWidgets.QMainWindow):
     def readConfig(self):
         f=open('config.bin','r')
         nums=f.read()
+        self.calibCoeff=np.zeros(shape=(6),dtype=float)
         self.offsetX=int(nums[0:100],2)
         self.offsetY=int(nums[100:200],2)
         self.roiX=int(nums[200:300],2)
@@ -68,33 +69,27 @@ class AnalyzeApplicationWindow(QtWidgets.QMainWindow):
         self.binningY=int(nums[500:600],2)
         self.HighRes=bool(int(nums[600:700],2))
         self.doubleExposureCoeff=float(int(nums[700:800],2))/1000.0
-        self.offAxisPixNum=int(nums[800:900],2)
-        self.CWRotation=bool(int(nums[900:1000],2))
-        self.refFrameNum=int(nums[1000:1100],2)
-        self.setExposure=int(nums[1100:1200],2)
-        self.setGain=int(nums[1200:1300],2)
-        self.setGamma=int(nums[1300:1400],2)
-        self.scanLen=int(nums[1400:1500],2)
-        self.maxFrameNum=int(nums[1500:1600],2)
-        self.flipSecondaryVertical=bool(int(nums[1600:1700],2))
-        self.flipSecondaryHorizontal=bool(int(nums[1700:1800],2))
-        self.secondaryVerticalLine=int(nums[1800:1900],2)
-        self.order=int(nums[1900:2000],2)
-        self.baslerReverseX=bool(int(nums[2000:2100],2))
-        self.configGammaMin=float(int(nums[2100:2200],2))/1000.0
-        self.configGammaMax=float(int(nums[2200:2300],2))/1000.0
-        self.calibCoeffNum=int(nums[2300:2400],2)
-        self.calibCoeff_x=np.zeros(shape=(self.calibCoeffNum),dtype=float)
-        self.calibCoeff_y=np.zeros(shape=(self.calibCoeffNum),dtype=float)
-        cx=0
-        cy=0
-        for i in range(2*self.calibCoeffNum):
-            if(i%2==0):
-                self.calibCoeff_x[cx]=float(int(nums[2400+(i*100):2400+((i+1)*100)],2))/1000.0
-                cx+=1
-            else:
-                self.calibCoeff_y[cy]=float(int(nums[2400+(i*100):2400+((i+1)*100)],2))/1000.0
-                cy+=1
+        self.calibCoeff[0]=float(int(nums[800:900],2))/1000.0
+        self.calibCoeff[1]=float(int(nums[900:1000],2))/1000.0
+        self.calibCoeff[2]=float(int(nums[1000:1100],2))/1000.0
+        self.calibCoeff[3]=float(int(nums[1100:1200],2))/1000.0
+        self.calibCoeff[4]=float(int(nums[1200:1300],2))/1000.0
+        self.calibCoeff[5]=float(int(nums[1300:1400],2))/1000.0
+        self.offAxisPixNum=int(nums[1400:1500],2)
+        self.CWRotation=bool(int(nums[1500:1600],2))
+        self.refFrameNum=int(nums[1600:1700],2)
+        self.setExposure=int(nums[1700:1800],2)
+        self.setGain=int(nums[1800:1900],2)
+        self.setGamma=int(nums[1900:2000],2)
+        self.scanLen=int(nums[2000:2100],2)
+        self.maxFrameNum=int(nums[2100:2200],2)
+        self.flipSecondaryVertical=bool(int(nums[2200:2300],2))
+        self.flipSecondaryHorizontal=bool(int(nums[2300:2400],2))
+        self.secondaryVerticalLine=int(nums[2400:2500],2)
+        self.order=int(nums[2500:2600],2)
+        self.baslerReverseX=bool(int(nums[2600:2700],2))
+        self.configGammaMin=float(int(nums[2700:2800],2))/1000.0
+        self.configGammaMax=float(int(nums[2800:2900],2))/1000.0
         f.close()
     def loadCube(self):
         fname, _ = QFileDialog.getOpenFileName(self, 'Open file', '.',"Cube File (*.cube)")

@@ -20,6 +20,7 @@ class StartUpApplicationWindow(QtWidgets.QMainWindow):
         pixmap=pixmap.scaled(400,200)
         self.ui.label.setPixmap(pixmap)
         self.ui.pushButton_recordWindow.clicked.connect(self.showRecordWindow)
+        self.ui.pushButton_recordWindowDecoupled.clicked.connect(self.showRecordWindowDecoupled)
         self.ui.pushButton_analyseData.clicked.connect(self.showAnalyzeWindow)
         self.readConfig()
         self.index400, self.index950, self.x_lookup, self.y_lookup=self.lookUpTable()
@@ -38,6 +39,14 @@ class StartUpApplicationWindow(QtWidgets.QMainWindow):
         #os.system('pythonw recordWindow.pyw')
         Add=os.getcwd()+r'\Src'
         subprocess.Popen('pythonw.exe recordWindow.pyw', cwd=Add ,shell=True,)
+        print('t3')
+        QtWidgets.qApp.processEvents()
+    def showRecordWindowDecoupled(self):
+        QtWidgets.qApp.processEvents()
+        print('t2')
+        #os.system('pythonw recordWindow.pyw')
+        Add=os.getcwd()+r'\Src'
+        subprocess.Popen('pythonw.exe recordWindowDecoupled.pyw', cwd=Add ,shell=True,)
         print('t3')
         QtWidgets.qApp.processEvents()
     def showAnalyzeWindow(self):

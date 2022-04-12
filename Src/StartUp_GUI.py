@@ -14,14 +14,14 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_StartUpWindow(object):
     def setupUi(self, StartUpWindow):
         StartUpWindow.setObjectName("StartUpWindow")
-        StartUpWindow.resize(400, 300)
+        StartUpWindow.resize(500, 300)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(StartUpWindow.sizePolicy().hasHeightForWidth())
         StartUpWindow.setSizePolicy(sizePolicy)
-        StartUpWindow.setMinimumSize(QtCore.QSize(400, 300))
-        StartUpWindow.setMaximumSize(QtCore.QSize(400, 300))
+        StartUpWindow.setMinimumSize(QtCore.QSize(500, 300))
+        StartUpWindow.setMaximumSize(QtCore.QSize(500, 300))
         self.centralwidget = QtWidgets.QWidget(StartUpWindow)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayout = QtWidgets.QGridLayout(self.centralwidget)
@@ -29,20 +29,29 @@ class Ui_StartUpWindow(object):
         self.label = QtWidgets.QLabel(self.centralwidget)
         self.label.setText("")
         self.label.setObjectName("label")
-        self.gridLayout.addWidget(self.label, 0, 0, 1, 2)
+        self.gridLayout.addWidget(self.label, 0, 0, 1, 3,
+                alignment=QtCore.Qt.AlignCenter)
         self.pushButton_recordWindow = QtWidgets.QPushButton(self.centralwidget)
         font = QtGui.QFont()
         font.setPointSize(16)
         self.pushButton_recordWindow.setFont(font)
         self.pushButton_recordWindow.setObjectName("pushButton_recordWindow")
         self.gridLayout.addWidget(self.pushButton_recordWindow, 1, 0, 1, 1)
+        #--------New record window widget for dissabled scanner
+        self.pushButton_recordWindowDecoupled = QtWidgets.QPushButton(self.centralwidget)
+        font = QtGui.QFont()
+        font.setPointSize(16)
+        self.pushButton_recordWindowDecoupled.setFont(font)
+        self.pushButton_recordWindowDecoupled.setObjectName("pushButton_recordWindowDecoupled")
+        self.gridLayout.addWidget(self.pushButton_recordWindowDecoupled, 1, 1, 1, 1)
+        #--------
         self.pushButton_analyseData = QtWidgets.QPushButton(self.centralwidget)
         self.pushButton_analyseData.setMinimumSize(QtCore.QSize(0, 30))
         font = QtGui.QFont()
         font.setPointSize(16)
         self.pushButton_analyseData.setFont(font)
         self.pushButton_analyseData.setObjectName("pushButton_analyseData")
-        self.gridLayout.addWidget(self.pushButton_analyseData, 1, 1, 1, 1)
+        self.gridLayout.addWidget(self.pushButton_analyseData, 1, 2, 1, 1)
         StartUpWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(StartUpWindow)
@@ -52,6 +61,8 @@ class Ui_StartUpWindow(object):
         _translate = QtCore.QCoreApplication.translate
         StartUpWindow.setWindowTitle(_translate("StartUpWindow", "MainWindow"))
         self.pushButton_recordWindow.setText(_translate("StartUpWindow", "Record Data"))
+        self.pushButton_recordWindowDecoupled.setText(_translate("StartUpWindow",
+            "Record Data Decoupled"))
         self.pushButton_analyseData.setText(_translate("StartUpWindow", "Analyse Data"))
 
 
