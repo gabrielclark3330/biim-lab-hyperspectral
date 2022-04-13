@@ -6,13 +6,17 @@ from imutils import paths
 import numpy as np
 import argparse
 import imutils
+import pickle
 import cv2
 from matplotlib import pyplot as plt
 
+# Vector and homography goes from img1->img2
+# TimeStamp is for img1
 class transform():
-    def __init__(self, vector, homography):
+    def __init__(self, vector, homography, timeStamp):
         self.vector = vector
         self.homography = homography
+        self.timeStamp = timeStamp
 
 def findVectorFromTo(from_set, to_set):
     avg_point_from = [0 for x in range(len(from_set[0][0]))]
@@ -61,23 +65,26 @@ def readDataCube(filePath):
     return cube_file
 
 ### GET ALL IMAGES FROM PATH AND APPEND TO IMAGES ###
-print("[INFO] loading images...")
 path = pathlib.Path(__file__).parent.resolve()
 path = os.path.join(path, "imageWriteDir")
-print(path)
+print("[INFO] loading images from: ", path)
 imagePaths = sorted(list(paths.list_images(path)))
 images = []
 # loop over the image paths, load each one, and add them to our
 # images to stitch list
 for imagePath in imagePaths:
-	image = cv2.imread(imagePath, 0) # grayscale specified
-	images.append(image)
+    timestamp = os.path.basename(os.path.normpath(imagePath))[0:-4] # strips the .png ending off the string
+    image = cv2.imread(imagePath, 0) # grayscale specified
+    images.append((image, timestamp))
 #####################################################
-
+print("[INFO] images loaded")
 
 def getTransfromImgs(img1, img2):
+    timestamp = img1[1]
+    img1 = img1[0]
+    img2 = img2[0]
     ### CALCULATE MATCHING KEY POINTS BETWEEN IMAGES ###
-    MIN_MATCH_COUNT = 10
+    MIN_MATCH_COUNT = 9
     #img1 = images[0] # queryImage
     #img2 = images[40] # trainImage
     # Initiate SIFT detector
@@ -97,22 +104,24 @@ def getTransfromImgs(img1, img2):
             good.append(m)
     #####################################################
 
-
     ### CALCULATE HOMOGRAPHY BETWEEN IMAGES ###
+    homography = None
+    v_p1_to_p2 = None
     if len(good)>MIN_MATCH_COUNT:
         src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
         dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
         v_p1_to_p2 = findVectorFromTo(src_pts, dst_pts)
 
-        M, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
+        homography, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
         matchesMask = mask.ravel().tolist()
         h,w = img1.shape
         pts = np.float32([ [0,0],[0,h-1],[w-1,h-1],[w-1,0] ]).reshape(-1,1,2)
-        dst = cv2.perspectiveTransform(pts,M)
+        dst = cv2.perspectiveTransform(pts,homography)
         img2 = cv2.polylines(img2,[np.int32(dst)],True,255,3, cv2.LINE_AA)
     else:
         print( "Not enough matches are found - {}/{}".format(len(good), MIN_MATCH_COUNT) )
         matchesMask = None
+        return None
     #####################################################
     ### DISPLAY MATCHING IMAGE POINTS ###
     ''' 
@@ -123,15 +132,43 @@ def getTransfromImgs(img1, img2):
     img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
     plt.imshow(img3, 'gray'),plt.show()
     '''
+    return transform(v_p1_to_p2, homography, timestamp)
     #####################################################
-    return transform(v_p1_to_p2, M)
 
 
-img1 = images[0] # queryImage
-img2 = images[40] # trainImage
+'''
+Algorithm steps:
+1. Find the closest web cam images to each hyperspectral line scan and pair them
+    Do a binary search through the image timestamps for each linescan
+2. Get the transform(vector, homography) from each webcam image to the next image in order of time.
+3. For each line scan, map each of its points from 
+    ((lineScan).y+len(image)/2)
+    ((lineScan).x+len(image[0])/2)
+    lineScan*homography # all points in line scan are shifted by homorgraphy
+    lineScan # all points in line scan are shifted by all vectors up to that timestamp added together
+    store point data with its corisponding hyperspectral data
+4. Print stored data into image
+'''
+
+def findClosestTransform(time, trasnforms):
+    closest_transform = None
+    return closest_transform
+
+
+# transformArr is filtered based on if there were enough matches between two images
 transformArr = []
-for imageIndex in range(len(images)-1):
-    transformArr.append(getTransfromImgs(images[imageIndex], images[imageIndex+1]))
+img1 = images[0]
+for img2 in images[1:]:
+    transf = getTransfromImgs(img1, img2)
+    if transf:
+        transformArr.append(transf)
+        img1 = img2
+
+
+cube_file = readDataCube('.\\data\\stitchingTestDesk.cube') # [spectrum, linescan[i], linescan]
+ff = open('.\\Src\\.tempTime\\out_final_timestamps.pick',"rb")
+line_scan_times = pickle.load(ff)
+
 
 x = []
 y = []
@@ -144,7 +181,6 @@ for transf in transformArr:
 print(transformArr)
 plt.scatter(x, y),plt.show()
 
-cube_file = readDataCube('..\\data\\decoupledLeaf.cube')
 
 
 ''' 
