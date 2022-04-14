@@ -155,6 +155,10 @@ def findClosestTransform(time, trasnforms):
     return closest_transform
 
 
+cube_file = readDataCube('.\\data\\stitchingTestDesk.cube') # [spectrum, linescan[i], linescan]
+ff = open('.\\Src\\.tempTime\\timestamps_17_00_19.pick',"rb")
+line_scan_times = pickle.load(ff)
+
 # transformArr is filtered based on if there were enough matches between two images
 transformArr = []
 img1 = images[0]
@@ -164,10 +168,6 @@ for img2 in images[1:]:
         transformArr.append(transf)
         img1 = img2
 
-
-cube_file = readDataCube('.\\data\\stitchingTestDesk.cube') # [spectrum, linescan[i], linescan]
-ff = open('.\\Src\\.tempTime\\out_final_timestamps.pick',"rb")
-line_scan_times = pickle.load(ff)
 
 
 x = []
