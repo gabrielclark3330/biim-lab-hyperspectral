@@ -13,10 +13,11 @@ from matplotlib import pyplot as plt
 # Vector and homography goes from img1->img2
 # TimeStamp is for img1
 class transform():
-    def __init__(self, vector, homography, timeStamp):
+    def __init__(self, vector, homography, timeStamp, vectorToNow):
         self.vector = vector
         self.homography = homography
         self.timeStamp = timeStamp
+        self.vectorToNow = vectorToNow
 
 def findVectorFromTo(from_set, to_set):
     avg_point_from = [0 for x in range(len(from_set[0][0]))]
@@ -79,6 +80,7 @@ for imagePath in imagePaths:
 #####################################################
 print("[INFO] images loaded")
 
+transformUpToThisPoint = [0,0]
 def getTransfromImgs(img1, img2):
     timestamp = img1[1]
     img1 = img1[0]
@@ -111,6 +113,8 @@ def getTransfromImgs(img1, img2):
         src_pts = np.float32([ kp1[m.queryIdx].pt for m in good ]).reshape(-1,1,2)
         dst_pts = np.float32([ kp2[m.trainIdx].pt for m in good ]).reshape(-1,1,2)
         v_p1_to_p2 = findVectorFromTo(src_pts, dst_pts)
+        transformUpToThisPoint[0]+=v_p1_to_p2[0]
+        transformUpToThisPoint[1]+=v_p1_to_p2[1]
 
         homography, mask = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC,5.0)
         matchesMask = mask.ravel().tolist()
@@ -132,7 +136,7 @@ def getTransfromImgs(img1, img2):
     img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
     plt.imshow(img3, 'gray'),plt.show()
     '''
-    return transform(v_p1_to_p2, homography, timestamp)
+    return transform(v_p1_to_p2, homography, timestamp, transformUpToThisPoint)
     #####################################################
 
 
@@ -150,14 +154,33 @@ Algorithm steps:
 4. Print stored data into image
 '''
 
-def findClosestTransform(time, trasnforms):
-    closest_transform = None
-    return closest_transform
+# findClosestTransform does a binary search through transforms to find closest match search_time
+# NOTE: search_time MUST have the form HH_MM_SS_FFFFFF if it has fewer characters the conversion will fail
+def findClosestTransform(search_time, transforms):
+    indexL = 0 #left
+    indexC = len(transforms)//2 #center
+    indexR = len(transforms)-1 #right
+    considered_transform = transforms[indexC]
+    while indexL < indexR:
+        #print(f"L={indexL} C={indexC} R={indexR} tran={considered_transform.timeStamp}")
+        if int(search_time) < int(considered_transform.timeStamp): # string to find is on the left of considered_transform
+            indexR = indexC-1
+            indexC = indexL+((indexR - indexL)//2)
+            indexL = indexL
+        elif int(search_time) > int(considered_transform.timeStamp): # string to find is on the right of considered_transform
+            indexL = indexC+1
+            indexC = indexL+((indexR - indexL)//2)
+            indexR = indexR
+        elif int(search_time) == int(considered_transform.timeStamp):
+            return considered_transform
+        considered_transform = transforms[indexC]
+    return considered_transform
 
-
-cube_file = readDataCube('.\\data\\stitchingTestDesk.cube') # [spectrum, linescan[i], linescan]
+cube_file = readDataCube('.\\data\\stitchingTestDesk.cube') # [spectrum, linescan points, linescan]
 ff = open('.\\Src\\.tempTime\\timestamps_17_00_19.pick',"rb")
 line_scan_times = pickle.load(ff)
+if len(line_scan_times) != len(cube_file[0,:,0]):
+    print("[ERROR] lineScan times different from cube file length")
 
 # transformArr is filtered based on if there were enough matches between two images
 transformArr = []
@@ -168,18 +191,22 @@ for img2 in images[1:]:
         transformArr.append(transf)
         img1 = img2
 
-
+line_scan_transforms = []
+for line_scan_index in range(len(line_scan_times)):
+    line_scan_transforms.append(findClosestTransform(line_scan_times[line_scan_index], transformArr))
 
 x = []
 y = []
-currentPos = [0 for x in range(len(transformArr[0].vector))]
-for transf in transformArr:
-    for component in range(len(transf.vector)):
-        currentPos[component] += transf.vector[component]
+wavelen = 100
+hyperCube = np.zeros((10000,10000,10000)) #TODO: find how big this array should be
+for linescan_index in range(len(line_scan_transforms)):
+    for linescan_points in hyperCube[wavelen,:,line_scan_index]:
+        for linescan_point in linescan_points: #goes from top to bottom of picture
+            print(linescan_points)
     x.append(currentPos[0])
     y.append(currentPos[1])
 print(transformArr)
-plt.scatter(x, y),plt.show()
+plt.imshow(cube_file[:,0,:]),plt.show()
 
 
 
