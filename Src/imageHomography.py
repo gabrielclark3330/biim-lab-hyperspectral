@@ -68,7 +68,7 @@ def readDataCube(filePath):
 ### GET ALL IMAGES FROM PATH AND APPEND TO IMAGES ###
 path = pathlib.Path(__file__).parent.resolve()
 path = os.path.join(path, "imageWriteDir")
-print("[INFO] loading images from: ", path)
+print("[INFO] Loading images from: ", path)
 imagePaths = sorted(list(paths.list_images(path)))
 images = []
 # loop over the image paths, load each one, and add them to our
@@ -78,7 +78,7 @@ for imagePath in imagePaths:
     image = cv2.imread(imagePath, 0) # grayscale specified
     images.append((image, timestamp))
 #####################################################
-print("[INFO] images loaded")
+print("[INFO] Images loaded")
 
 transformUpToThisPoint = [0,0]
 def getTransfromImgs(img1, img2):
@@ -180,7 +180,7 @@ cube_file = readDataCube('.\\data\\stitchingTestDesk.cube') # [spectrum, linesca
 ff = open('.\\Src\\.tempTime\\timestamps_17_00_19.pick',"rb")
 line_scan_times = pickle.load(ff)
 if len(line_scan_times) != len(cube_file[0,:,0]):
-    print("[ERROR] lineScan times different from cube file length")
+    print("[ERROR] LineScan times different from cube file length")
 
 # transformArr is filtered based on if there were enough matches between two images
 transformArr = []
@@ -190,23 +190,21 @@ for img2 in images[1:]:
     if transf:
         transformArr.append(transf)
         img1 = img2
+print("[INFO] Transforms calculated from images")
 
 line_scan_transforms = []
 for line_scan_index in range(len(line_scan_times)):
     line_scan_transforms.append(findClosestTransform(line_scan_times[line_scan_index], transformArr))
+print("[INFO] Transforms paired with image timestamps")
 
-x = []
-y = []
 wavelen = 100
-hyperCube = np.zeros((10000,10000,10000)) #TODO: find how big this array should be
-for linescan_index in range(len(line_scan_transforms)):
-    for linescan_points in hyperCube[wavelen,:,line_scan_index]:
-        for linescan_point in linescan_points: #goes from top to bottom of picture
-            print(linescan_points)
-    x.append(currentPos[0])
-    y.append(currentPos[1])
-print(transformArr)
-plt.imshow(cube_file[:,0,:]),plt.show()
+hyperCube = np.zeros((341,1000,1000)) #TODO: [there are 341 wavelen slices, ,]
+for linescan_index in range(len(cube_file[0][0])): # for each linescan
+    for point_index in range(len(cube_file[wavelen])): # for each point in each linescan
+        # perform point shift
+        hyperCube[wavelen, point_index, linescan_index] = cube_file[wavelen][point_index][linescan_index]
+
+plt.imshow(hyperCube[wavelen,0:100,0:200]),plt.show()
 
 
 
@@ -229,4 +227,3 @@ cv2.imshow("Warped Source Image", im_out)
 cv2.waitKey(0)
 #####################################################
 '''
-
