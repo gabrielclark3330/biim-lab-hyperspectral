@@ -1,5 +1,6 @@
 # import the necessary packages
 import os
+import math
 import pathlib
 from re import I
 from imutils import paths
@@ -136,7 +137,7 @@ def getTransfromImgs(img1, img2):
     img3 = cv2.drawMatches(img1,kp1,img2,kp2,good,None,**draw_params)
     plt.imshow(img3, 'gray'),plt.show()
     '''
-    return transform(v_p1_to_p2, homography, timestamp, transformUpToThisPoint)
+    return transform(v_p1_to_p2, homography, timestamp, tuple(transformUpToThisPoint))
     #####################################################
 
 
@@ -195,16 +196,19 @@ print("[INFO] Transforms calculated from images")
 line_scan_transforms = []
 for line_scan_index in range(len(line_scan_times)):
     line_scan_transforms.append(findClosestTransform(line_scan_times[line_scan_index], transformArr))
-print("[INFO] Transforms paired with image timestamps")
+print(f"[INFO] {len(line_scan_transforms)} transforms paired with image timestamps")
 
 wavelen = 100
 hyperCube = np.zeros((341,1000,1000)) #TODO: [there are 341 wavelen slices, ,]
 for linescan_index in range(len(cube_file[0][0])): # for each linescan
     for point_index in range(len(cube_file[wavelen])): # for each point in each linescan
         # perform point shift
-        hyperCube[wavelen, point_index, linescan_index] = cube_file[wavelen][point_index][linescan_index]
+        linescan_index = min(len(line_scan_transforms)-1, linescan_index)
+        point_x = max(0, min(999, math.floor(linescan_index + line_scan_transforms[linescan_index].vectorToNow[0])))
+        point_y = max(0, min(999, math.floor(point_index + line_scan_transforms[linescan_index].vectorToNow[1])))
+        hyperCube[wavelen, point_y, point_x] = cube_file[wavelen][point_index][linescan_index]
 
-plt.imshow(hyperCube[wavelen,0:100,0:200]),plt.show()
+plt.imshow(hyperCube[wavelen]),plt.show()
 
 
 
