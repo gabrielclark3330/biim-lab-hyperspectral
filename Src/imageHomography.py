@@ -183,6 +183,24 @@ line_scan_times = pickle.load(ff)
 if len(line_scan_times) != len(cube_file[0,:,0]):
     print("[ERROR] LineScan times different from cube file length")
 
+
+transformArr = []
+img1 = images[0]
+img2 = images[15]
+transf = getTransfromImgs(img1, img2)
+print(transf.vector)
+print(transf.homography)
+src = np.array([[len(img1[0][0])//2, len(img1[0])//2], [1,1]], dtype='float32')
+src = np.array([src])
+print(src)
+dst = cv2.perspectiveTransform(src, transf.homography)
+print(dst)
+if transf:
+    transformArr.append(transf)
+    img1 = img2
+if True:
+    exit()
+
 # transformArr is filtered based on if there were enough matches between two images
 transformArr = []
 img1 = images[0]
