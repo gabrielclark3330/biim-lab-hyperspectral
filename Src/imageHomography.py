@@ -183,7 +183,7 @@ line_scan_times = pickle.load(ff)
 if len(line_scan_times) != len(cube_file[0,:,0]):
     print("[ERROR] LineScan times different from cube file length")
 
-
+'''
 transformArr = []
 img1 = images[0]
 img2 = images[15]
@@ -200,6 +200,7 @@ if transf:
     img1 = img2
 if True:
     exit()
+'''
 
 # transformArr is filtered based on if there were enough matches between two images
 transformArr = []
@@ -222,8 +223,8 @@ for linescan_index in range(len(cube_file[0][0])): # for each linescan
     for point_index in range(len(cube_file[wavelen])): # for each point in each linescan
         # perform point shift
         linescan_index = min(len(line_scan_transforms)-1, linescan_index)
-        point_x = max(0, min(999, math.floor(linescan_index + line_scan_transforms[linescan_index].vectorToNow[0])))
-        point_y = max(0, min(999, math.floor(point_index + line_scan_transforms[linescan_index].vectorToNow[1])))
+        point_x = max(0, min(999, math.floor(linescan_index + line_scan_transforms[linescan_index].vectorToNow[0]+400)))
+        point_y = max(0, min(999, math.floor(point_index + line_scan_transforms[linescan_index].vectorToNow[1]+400)))
         hyperCube[wavelen, point_y, point_x] = cube_file[wavelen][point_index][linescan_index]
 
 plt.imshow(hyperCube[wavelen]),plt.show()
