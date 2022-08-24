@@ -5,3 +5,5 @@
 3. Copy config.bin and lookupTable.txt from /Config folder into the /Src folder
 4. If everything was correct by running main.pyw you can start the application
 5. You will probably also need to install pylon drivers?
+
+### NOTE: The imageHomography.ipynb notebook requires the opencv-contrib-python package in lou of the opencv package.
