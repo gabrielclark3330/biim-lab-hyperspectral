@@ -103,7 +103,8 @@ for index in range(0, 1000):
 
 ### START DISPLAY PATH IN 3D GRAPH ### 
 fig = plt.figure()
-ax = fig.gca(projection='3d')
+#ax = fig.gca(projection='3d')
+ax = fig.add_subplot(projection='3d')
 
 x = []
 y = []
