@@ -136,7 +136,7 @@ plt.show()
 row_fov = 78.8 # 78.8 degree fov in original photo
 row_fov = np.radians(row_fov)
 #img = cv2.imread('./Downloads/aerialPhotograph.jpeg', 0)
-img = cv2.imread('./Downloads/checker.jpg', 0)
+img = cv2.imread('./checker.jpg', 0)
 plt.imshow(img)
 plt.show()
 
