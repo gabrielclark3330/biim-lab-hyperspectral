@@ -63,19 +63,27 @@ class OdomDatum():
         self.nsec = nsec
         self.position = position
         self.orientation = orientation 
+
+class HYSPMDatum():
+    # linescan is an MxN matrix where M is and N is # TODO: fill in description
+    def __init__(self, sec, nsec, linescan, odom_match_index=None):
+        self.sec = sec
+        self.nsec = nsec
+        self.linescan = linescan
+        self.odom_match_index = odom_match_index
 ### END HELPER FUNCTIONS ###
 
 
-### START READ IN FILE ###
+### START READ IN ODOM FILE ###
 odom_file = open('./odom.txt', 'r')
 lines = odom_file.readlines()
 file_lines = []
 for line in lines:
     file_lines.append(line)
-### END READ IN FILE ###
+### END READ IN ODOM FILE ###
 
 
-### START PARSE FILE INTO ARRAY AND OBJECT ###
+### START PARSE ODOM FILE INTO ARRAY AND OBJECT ###
 odometry_data = []
 for index, line in enumerate(file_lines):
     if line[:7]=="header:" and index+17 < len(file_lines):
@@ -88,18 +96,41 @@ for index, line in enumerate(file_lines):
                        float(file_lines[index+15][file_lines[index+15].find(":")+2:-1]),
                        float(file_lines[index+16][file_lines[index+16].find(":")+2:-1]),
                        float(file_lines[index+17][file_lines[index+17].find(":")+2:-1])]
-        
+
         quat = quaternion.from_float_array(orientation)
         odometry_data.append(OdomDatum(sec, nsec, position, quat))
 
 '''
+# fake odometry data for a straight path with camera pointed down
 odometry_data = []
 for index in range(0, 1000):
     quat = quaternion.from_rotation_vector(np.array([1,0,0])*1.5708)
     #quat = quat*quaternion.from_rotation_vector(np.array([0,1,0])*1.5708)
     odometry_data.append(OdomDatum(index, index, [0, index, 700], quat)) # odom is pointed in -y up is z 1.5708 , [1.5708, 1.5708, 0]
 '''
-### END PARSE FILE INTO ARRAY AND OBJECT ###
+### END PARSE ODOM FILE INTO ARRAY AND OBJECT ###
+
+
+### START READ IN HYPERSPECTRAL FILE ###
+hyperspectral_file = open('./hyperspectral.txt', 'r')
+lines = hyperspectral_file.readlines()
+file_lines = []
+for line in lines:
+    file_lines.append(line)
+### END READ IN HYPERSPECTRAL FILE ###
+
+
+### START PARSE HYPERSPECTRAL FILE ###
+### END PARSE HYPERSPECTRAL FILE ###
+
+
+### START MATCH HYPERSPECTRAL OBJECT WITH APPROPRIATE ODOM ELEMENT ###
+# STEPS
+# sort the odom and hyperspectral object arrays by 1.sec and 2.nsec (should be sorted but a couple elements out of oder
+# for each element in the hyperspectral array find the closest odom element in t based off of time using binary search
+# place odom element index into the coresponding hyperspectral object
+### END MATCH HYPERSPECTRAL OBJECT WITH APPROPRIATE ODOM ELEMENT ###
+
 
 ### START DISPLAY PATH IN 3D GRAPH ### 
 fig = plt.figure()
@@ -141,14 +172,14 @@ img = cv2.imread('./checker.jpg', 0)
 plt.imshow(img)
 plt.show()
 
-casted_img = [[0 for col in range(3000)] for row in range(3000)]
-for pixel_col_index, datum in enumerate(odometry_data):
+casted_img = [[0 for col in range(3000)] for row in range(3000)] # blank canvas for the image to be reprojected onto
+for pixel_col_index, datum in enumerate(odometry_data): # for each column in the image
     odom_vector = quaternion.rotate_vectors(datum.orientation, [0, -1, 0])
     axis_of_rotation = quaternion.rotate_vectors(datum.orientation, [0, 0, 1])
     normalized_vector = np.array(axis_of_rotation)/np.linalg.norm(np.array(axis_of_rotation))
 
     # For each linescan point
-    for pixel_row_index in range(img.shape[0]): # for each row
+    for pixel_row_index in range(img.shape[0]): # for each row in the image
         if pixel_col_index >= img.shape[1]:
             break
         pixel_value = img[pixel_row_index, pixel_col_index]
