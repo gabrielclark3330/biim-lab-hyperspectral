@@ -1,6 +1,9 @@
 import time 
 from pypylon import pylon
 import cv2
+import numpy as np
+import matplotlib.pyplot as plt
+
 
 time_sec = time.time()
 time_nsec = time.time_ns()
@@ -17,11 +20,12 @@ try:
 except Exception as e:
     print("Camera Is Busy Or Not Connected!" + str(e))
     exit()
-
+# When recording this code assumes the camera is pointing down, the silver pin forward, the HSI logo to the right, and the camera being moved to the right
+# the returned matrix contains line scans in each column and each row as a different frequency
 camera.Open()
 camera.ExposureAuto.SetValue("Off")
 camera.ExposureMode.SetValue("Timed")
-camera.ExposureTime.SetValue(50000)
+camera.ExposureTime.SetValue(5000) #0 <- good for images when the lights on included platform are on
 camera.GainAuto.SetValue("Off")
 camera.Gain.SetValue(25)
 camera.Gamma.SetValue(1)
@@ -34,11 +38,18 @@ camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
 fps = camera.ResultingFrameRate.GetValue()
 print("fps: ", fps)
 
+hyper_cube = []
+
 while camera.IsGrabbing():
     grabResult = camera.RetrieveResult(10000, pylon.TimeoutHandling_ThrowException)
     image = converter.Convert(grabResult)
     basler_image = image.GetArray()
+    hyper_cube.append(basler_image)
     cv2.imshow('hypim image', basler_image)
     if cv2.waitKey(1) == ord('q'):
         break
-    #print(basler_image)
+
+hyper_cube = np.array(hyper_cube)
+display = hyper_cube[:,:,650]
+plt.imshow(display)
+plt.show()
