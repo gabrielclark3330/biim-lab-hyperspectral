@@ -121,6 +121,14 @@ for line in lines:
 
 
 ### START PARSE HYPERSPECTRAL FILE ###
+# hyperspectral_data is formated as an array of 2d arrays where each 2d arrays columns contains a linescan and each row is that linescan at different wavelengths 
+hyperspectral_data = []
+with open("hyperspectralData.txt", "a") as f:
+    hyperspectral_data = json.loads(jsonStr, f)
+# hyperspectral_timestamps is formated as an array of tuples where the tuple at index i contains (sec, nsec) for the ith hyperspectral_datum
+hyperspectral_timestamps = []
+with open("hyperspectralTimestamps.txt", "a") as f:
+    hyperspectral_timestamps = json.dump(time_stamps.toList(), f)
 ### END PARSE HYPERSPECTRAL FILE ###
 
 

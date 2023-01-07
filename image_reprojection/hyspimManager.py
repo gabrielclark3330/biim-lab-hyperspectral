@@ -3,10 +3,8 @@ from pypylon import pylon
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import json
 
-
-time_sec = time.time()
-time_nsec = time.time_ns()
 
 camera = None
 try:
@@ -39,15 +37,23 @@ fps = camera.ResultingFrameRate.GetValue()
 print("fps: ", fps)
 
 hyper_cube = []
+time_stamps = []
 
 while camera.IsGrabbing():
     grabResult = camera.RetrieveResult(10000, pylon.TimeoutHandling_ThrowException)
     image = converter.Convert(grabResult)
     basler_image = image.GetArray()
     hyper_cube.append(basler_image)
+    time_stamps.append((time.time(), time.time_ns()))
     cv2.imshow('hypim image', basler_image)
     if cv2.waitKey(1) == ord('q'):
         break
+
+
+with open("hyperspectralData.txt", "a") as f:
+    json.dump(hyper_cube.toList(), f)
+with open("hyperspectralTimestamps.txt", "a") as f:
+    json.dump(time_stamps.toList(), f)
 
 hyper_cube = np.array(hyper_cube)
 display = hyper_cube[:,:,650]
