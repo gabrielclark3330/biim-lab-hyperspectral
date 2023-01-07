@@ -23,7 +23,7 @@ matplotlib.use('Qt5Agg')
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 import matplotlib.ticker as ticker
-from Arduino import *
+#from Arduino import *
 import numpy as np
 import time as tm
 import device
@@ -41,7 +41,7 @@ from yaml import Loader, Dumper
 from glob import glob
 from scipy.io import savemat
 import qdarkstyle
-import serial
+#import serial
 from RecordWindow_GUI import  Ui_RecordWindow
 import subprocess
 ############################################################
@@ -176,8 +176,14 @@ class AsyncWrite(threading.Thread):
 global camera_G
 try:
     camera_G=pylon.InstantCamera(pylon.TlFactory.GetInstance().CreateFirstDevice())
-except:
-    print("Camera Is Busy Or Not Connected!")
+    '''
+    tl_factory = pylon.TlFactory.GetInstance()
+    devices = tl_factory.EnumerateDevices()
+    for device in devices:
+        print(device.GetFriendlyName())
+    '''
+except Exception as e:
+    print("Camera Is Busy Or Not Connected!" + str(e))
     exit()
 class BaslerThread(QThread):
     change_pixmap_signal = pyqtSignal(np.ndarray)
@@ -190,8 +196,6 @@ class BaslerThread(QThread):
         super().__init__()
         self._run_flag=True
         self.camera = camera_G
-        #print("OnOpen event for device ", self.camera.GetDeviceInfo().GetModelName())
-        #print("Serial Number", self.camera.GetDeviceInfo().GetSerialNumber())
         self.SN=self.camera.GetDeviceInfo().GetSerialNumber()
         self.exposure = 100
         self.gain = 0.0
@@ -218,16 +222,11 @@ class BaslerThread(QThread):
         # Grabing Continusely (video) with minimal delay
         if self._run_flag:
             self.camera.Open()
-            #self.exposureLwLimit=int(self.camera.AutoExposureTimeLowerLimit.GetMin()/1000.0)
-            #self.exposureUpLimit=int(self.camera.AutoExposureTimeUpperLimit.GetMax()/1000.0)
-            #self.gainLwLimit=self.camera.AutoGainLowerLimit.GetMin()
-            #self.gainUpLimit=self.camera.AutoGainUpperLimit.GetMax()
             if(self.setBinning):
                 self.setBinning=False
                 self.camera.Close()
                 self.camera.Open()
                 nodemap = self.camera.GetNodeMap()
-                #print(self.BinningHorizontal)
                 self.camera.BinningHorizontal = self.BinningHorizontal        
                 self.camera.BinningVertical = self.BinningVertical
                 self.camera.BinningHorizontalMode = "Average"
@@ -236,20 +235,13 @@ class BaslerThread(QThread):
                 self.camera.Height=self.Height
                 self.camera.OffsetX=self.OffsetX
                 self.camera.OffsetY=self.OffsetY
-                #print('Reverse X')
-                #print(self.reverseX)
                 self.camera.ReverseX.SetValue(self.reverseX)
-                #print(self.BinningHorizontal)
-                #print(self.BinningVertical)
-                #print(self.camera.BinningVerticalMode.GetValue())
-                #print(self.camera.BinningHorizontalMode.GetValue())
             self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
             converter = pylon.ImageFormatConverter()
             # converting to opencv bgr format
             converter.InputPixelFormat = pylon.PixelType_Mono16
             converter.OutputPixelFormat = pylon.PixelType_Mono16
             converter.OutputBitAlignment = pylon.OutputBitAlignment_MsbAligned
-            #print(pylon.ImageFormatConverter_IsSupportedOutputFormat(pylon.PixelType_Mono10))
             self.dd=[]
         while (self.camera.IsGrabbing() and self._run_flag):
         # Grabing Continusely (video) with minimal delay
@@ -271,10 +263,6 @@ class BaslerThread(QThread):
                     self.camera.OffsetY=self.OffsetY
                 except:
                     return
-                #print(self.BinningHorizontal)
-                #print(self.BinningVertical)
-                #print(self.camera.BinningVerticalMode.GetValue())
-                #print(self.camera.BinningHorizontalMode.GetValue())
                 self.camera.StartGrabbing(pylon.GrabStrategy_LatestImageOnly)
                 converter = pylon.ImageFormatConverter()
                 converter.InputPixelFormat = pylon.PixelType_Mono16
@@ -944,11 +932,13 @@ def recordWindow():
     app.setStyleSheet(qdarkstyle.load_stylesheet(qt_api='pyqt5'))
     application = RecordApplicationWindow()
     application.resize(1024,800)
+    '''
     portList=serial_ports()
     cb = application.ui.comboBox_ArduinoCom
     for items in portList:
         cb.addItem(items)
     application.ui.pushButton_Update.clicked.connect(lambda: updateSerialPorts(application))
+    '''
     application.show()
     dd=[]
     application.someFunction()
