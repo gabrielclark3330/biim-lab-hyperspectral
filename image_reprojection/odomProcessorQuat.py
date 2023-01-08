@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import quaternion
+import pickle
 
 '''
 NOTES:
@@ -56,6 +57,29 @@ def isect_line_plane_v3(p0, p1, p_co, p_no, epsilon=1e-6):
 def remap_range(value, r1, r2): # ranges are inclusive on both sides
     return r2[0] + (value - r1[0]) * (r2[1] - r2[0]) / (r1[1] - r1[0])
 
+# returns index of the closest element that is not bigger than x
+def binary_search(arr, x):
+	low = 0
+	high = len(arr) - 1
+	mid = 0
+
+	while low <= high:
+
+		mid = (high + low) // 2
+
+		# If x is greater, ignore left half
+		if arr[mid] < x:
+			low = mid + 1
+
+		# If x is smaller, ignore right half
+		elif arr[mid] > x:
+			high = mid - 1
+
+		# means x is present at mid
+		else:
+			return mid
+	return mid
+
 class OdomDatum():
     # position in [x,y,z] orientation in [x,y,z,w]
     def __init__(self, sec, nsec, position, orientation):
@@ -65,11 +89,11 @@ class OdomDatum():
         self.orientation = orientation 
 
 class HYSPMDatum():
-    # linescan is an MxN matrix where M is and N is # TODO: fill in description
-    def __init__(self, sec, nsec, linescan, odom_match_index=None):
+    # linescan is a matrix where each column is a line scan and each row as a different frequency
+    def __init__(self, sec, nsec, line_scan, odom_match_index=None):
         self.sec = sec
         self.nsec = nsec
-        self.linescan = linescan
+        self.line_scan = line_scan
         self.odom_match_index = odom_match_index
 ### END HELPER FUNCTIONS ###
 
@@ -112,31 +136,39 @@ for index in range(0, 1000):
 
 
 ### START READ IN HYPERSPECTRAL FILE ###
-hyperspectral_file = open('./hyperspectral.txt', 'r')
-lines = hyperspectral_file.readlines()
-file_lines = []
-for line in lines:
-    file_lines.append(line)
+# hyperspectral_data is formated as an array of 2d arrays where each 2d arrays columns contains a linescan and each row is that linescan at different wavelengths 
+hyperspectral_data = []
+with open("hyperspectralData.pick", "rb") as f:
+    hyperspectral_data = pickle.load(f)
+# hyperspectral_timestamps is formated as an array of tuples where the tuple at index i contains (sec, nsec) for the ith hyperspectral_datum
+hyperspectral_timestamps = []
+with open("hyperspectralTimestamps.pick", "rb") as f:
+    hyperspectral_timestamps = pickle.load(f)
+
+hyperspectral_objs = []
+for i in range(len(hyperspectral_data)):
+    hyperspectral_objs.append(HYSPMDatum(hyperspectral_timestamps[i][0], hyperspectral_timestamps[i][1], hyperspectral_data[i]))
 ### END READ IN HYPERSPECTRAL FILE ###
 
 
-### START PARSE HYPERSPECTRAL FILE ###
-# hyperspectral_data is formated as an array of 2d arrays where each 2d arrays columns contains a linescan and each row is that linescan at different wavelengths 
-hyperspectral_data = []
-with open("hyperspectralData.txt", "a") as f:
-    hyperspectral_data = json.loads(jsonStr, f)
-# hyperspectral_timestamps is formated as an array of tuples where the tuple at index i contains (sec, nsec) for the ith hyperspectral_datum
-hyperspectral_timestamps = []
-with open("hyperspectralTimestamps.txt", "a") as f:
-    hyperspectral_timestamps = json.dump(time_stamps.toList(), f)
-### END PARSE HYPERSPECTRAL FILE ###
+###
+# Unedited hyperspectral data displayed
+hyper_cube = np.array(hyperspectral_data)
+display = hyper_cube[:,:,176]
+plt.imshow(display)
+plt.show()
+###
 
 
 ### START MATCH HYPERSPECTRAL OBJECT WITH APPROPRIATE ODOM ELEMENT ###
-# STEPS
-# sort the odom and hyperspectral object arrays by 1.sec and 2.nsec (should be sorted but a couple elements out of oder
+# sort the odom and hyperspectral object arrays first by sec and then nsec to break ties (should be sorted but a couple elements out of oder
+odometry_data.sort(key=lambda x: (x.sec, x.nsec))
+hyperspectral_objs.sort(key=lambda x: (x.sec, x.nsec))
 # for each element in the hyperspectral array find the closest odom element in t based off of time using binary search
-# place odom element index into the coresponding hyperspectral object
+hash_arr = [x.sec*(10**9)+x.nsec for x in odometry_data]
+for hyspim_obj in hyperspectral_objs:
+    index = binary_search(hash_arr, hyspim_obj.sec*(10**9)+hyspim_obj.nsec)
+    hyspim_obj.odom_match_index = index
 ### END MATCH HYPERSPECTRAL OBJECT WITH APPROPRIATE ODOM ELEMENT ###
 
 
