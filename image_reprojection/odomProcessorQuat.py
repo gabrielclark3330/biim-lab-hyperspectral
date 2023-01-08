@@ -213,6 +213,7 @@ plt.imshow(img)
 plt.show()
 
 casted_img = [[0 for col in range(3000)] for row in range(3000)] # blank canvas for the image to be reprojected onto
+
 for pixel_col_index, datum in enumerate(odometry_data): # for each column in the image
     odom_vector = quaternion.rotate_vectors(datum.orientation, [0, -1, 0])
     axis_of_rotation = quaternion.rotate_vectors(datum.orientation, [0, 0, 1])
