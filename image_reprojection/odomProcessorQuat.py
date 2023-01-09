@@ -151,13 +151,13 @@ for i in range(len(hyperspectral_data)):
 ### END READ IN HYPERSPECTRAL FILE ###
 
 
-###
+### START DISPLAY UNWARPED HYPERSPECTRAL IMAGE ON 1 WAVELEN
 # Unedited hyperspectral data displayed
 hyper_cube = np.array(hyperspectral_data)
 display = hyper_cube[:,:,176]
 plt.imshow(display)
 plt.show()
-###
+### END DISPLAY UNWARPED HYPERSPECTRAL IMAGE ON 1 WAVELEN
 
 
 ### START MATCH HYPERSPECTRAL OBJECT WITH APPROPRIATE ODOM ELEMENT ###
@@ -205,32 +205,28 @@ plt.show()
 
 
 ### START PROJECT PICTURE ONTO ARRAY FROM COLLECTED PATH ###
-row_fov = 78.8 # 78.8 degree fov in original photo
-row_fov = np.radians(row_fov)
 #img = cv2.imread('./Downloads/aerialPhotograph.jpeg', 0)
-img = cv2.imread('./checker.jpg', 0)
-plt.imshow(img)
-plt.show()
+#img = cv2.imread('./checker.jpg', 0)
+#plt.imshow(img)
+#plt.show()
 
 casted_img = [[0 for col in range(3000)] for row in range(3000)] # blank canvas for the image to be reprojected onto
-
-for pixel_col_index, datum in enumerate(odometry_data): # for each column in the image
-    odom_vector = quaternion.rotate_vectors(datum.orientation, [0, -1, 0])
-    axis_of_rotation = quaternion.rotate_vectors(datum.orientation, [0, 0, 1])
+wavelength_index = 176
+row_fov = np.radians(78.8) # 78.8 degree fov in original photo
+for hyspim_obj in hyperspectral_objs:
+    odometry_datum = odometry_data[hyspim_obj.odom_match_index]
+    odom_vector = quaternion.rotate_vectors(odometry_datum.orientation, [0, -1, 0])
+    axis_of_rotation = quaternion.rotate_vectors(odometry_datum.orientation, [0, 0, 1])
     normalized_vector = np.array(axis_of_rotation)/np.linalg.norm(np.array(axis_of_rotation))
 
-    # For each linescan point
-    for pixel_row_index in range(img.shape[0]): # for each row in the image
-        if pixel_col_index >= img.shape[1]:
-            break
-        pixel_value = img[pixel_row_index, pixel_col_index]
-        raycast_angle = remap_range(pixel_row_index, [0, img.shape[0]-1], [(row_fov/2)-row_fov, row_fov/2])
+    for pixel_row_index in range(len(hyspim_obj.line_scan)):
+        raycast_angle = remap_range(pixel_row_index, [0, len(hyspim_obj.linescan)-1], [(row_fov/2)-row_fov, row_fov/2])
 
         quat = quaternion.from_rotation_vector(normalized_vector*raycast_angle) # normalize and multiply
         raycast_vector = quaternion.rotate_vectors(quat, odom_vector)
 
-        end_point = datum.position+(raycast_vector*10000) # length of 10000 from camera
-        intersect = isect_line_plane_v3(datum.position, end_point, (0, 0, -200), (0,0,1)) # A plane with a normal of +z and z intercept of -200
+        end_point = odometry_datum.position+(raycast_vector*10000) # length of 10000 from camera
+        intersect = isect_line_plane_v3(odometry_datum.position, end_point, (0,0,-200), (0,0,1)) # A plane with a normal of +z and z intercept of -200
         if intersect is None:
             print("ERROR: parallel?")
             continue
@@ -238,7 +234,7 @@ for pixel_col_index, datum in enumerate(odometry_data): # for each column in the
         offset_of_model = 700 # this moves the intersections down and to the right to avoid the casted picture running off frame
         intersect = (intersect[0]+offset_of_model, intersect[1]+offset_of_model, intersect[2]+offset_of_model)
         if intersect[0]<len(casted_img) and intersect[1]<len(casted_img[0]) and intersect[0]>=0 and intersect[1]>=0:
-            casted_img[int(intersect[0])][int(intersect[1])] = img[pixel_row_index][pixel_col_index]
+            casted_img[int(intersect[0])][int(intersect[1])] = hyspim_obj.line_scan[pixel_row_index][wavelength_index]
 
 plt.imshow(casted_img)
 plt.show()

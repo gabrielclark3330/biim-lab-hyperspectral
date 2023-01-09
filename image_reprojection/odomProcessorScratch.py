@@ -14,7 +14,7 @@ for hyspim_obj in hyperspectral_objs:
         raycast_vector = quaternion.rotate_vectors(quat, odom_vector)
 
         end_point = odometry_datum.position+(raycast_vector*10000) # length of 10000 from camera
-        intersect = isect_line_plane_v3(odometry_datum.position, end_point, (0, 0, -200), (0,0,1)) # A plane with a normal of +z and z intercept of -200
+        intersect = isect_line_plane_v3(odometry_datum.position, end_point, (0,0,-200), (0,0,1)) # A plane with a normal of +z and z intercept of -200
         if intersect is None:
             print("ERROR: parallel?")
             continue
