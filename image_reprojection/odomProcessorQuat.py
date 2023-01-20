@@ -53,32 +53,52 @@ def isect_line_plane_v3(p0, p1, p_co, p_no, epsilon=1e-6):
     # The segment is parallel to plane.
     return None
 
-# remaps a value in range r1 into a returned value in range r2
-def remap_range(value, r1, r2): # ranges are inclusive on both sides
+
+def remap_range(value, r1, r2):
+    """
+    Ranges are inclusive on both sides
+    Remaps a value in range r1 into a returned value in range r2
+    """
     return r2[0] + (value - r1[0]) * (r2[1] - r2[0]) / (r1[1] - r1[0])
 
-# returns index of the closest element that is not bigger than x
+def interpolate_points_from_times(xyz1, xyz2, t1, t2, t_out):
+    """
+    xyz1, xyz2: Arrays representing two points in 3d space
+    t1, t2, t_out: Integers representing times
+        t1, t2: Represent a span of time
+        t_out: A time in relation to t1 and t2
+    
+    Returns an array representing a point in 3d space between xyz1 and xyz2 that is proportionally equal to the amount t_out is between t1 and t2.
+    """
+    return [
+            remap_range(t_out, [t1, t2], [xyz1[0], xyz2[0]]),
+            remap_range(t_out, [t1, t2], [xyz1[1], xyz2[1]]),
+            remap_range(t_out, [t1, t2], [xyz1[2], xyz2[2]])]
+
 def binary_search(arr, x):
-	low = 0
-	high = len(arr) - 1
-	mid = 0
+    """
+    returns index of the closest element in arr that is not bigger than x
+    """
+    low = 0
+    high = len(arr) - 1
+    mid = 0
 
-	while low <= high:
+    while low <= high:
 
-		mid = (high + low) // 2
+        mid = (high + low) // 2
 
-		# If x is greater, ignore left half
-		if arr[mid] < x:
-			low = mid + 1
+        # If x is greater, ignore left half
+        if arr[mid] < x:
+            low = mid + 1
 
-		# If x is smaller, ignore right half
-		elif arr[mid] > x:
-			high = mid - 1
+        # If x is smaller, ignore right half
+        elif arr[mid] > x:
+            high = mid - 1
 
-		# means x is present at mid
-		else:
-			return mid
-	return mid
+        # means x is present at mid
+        else:
+            return mid
+    return mid
 
 class OdomDatum():
     # position in [x,y,z] orientation in [x,y,z,w]
@@ -202,6 +222,19 @@ ax.set_zlabel('z')
 
 plt.show()
 ### END DISPLAY PATH IN 3D GRAPH ###
+
+
+### 
+def find_odom_objs_surrounding_time(odom_objs, time):
+    hyspim_obj.sec*(10**9)+hyspim_obj.nsec
+    hyspim_obj.odom_match_index
+    return odom_objs
+for hyspim_obj in hyperspectral_objs:
+    hyspim_obj_between_odom_objs = find_odom_objs_surrounding_time(odom_objs, time)
+    interpolated_odom_point = interpolate_points_from_times(xyz1, xyz2, t1, t2, t_out)
+    interpolated_odom_quat = quaternion.slerp(R1, R2, t1, t2, t_out)
+
+###
 
 
 ### START PROJECT PICTURE ONTO ARRAY FROM COLLECTED PATH ###
